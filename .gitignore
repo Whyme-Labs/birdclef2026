@@ -1,0 +1,56 @@
+# ─── Competition data (Kaggle's — do not redistribute) ───
+data/
+data_external/
+
+# ─── Large model weights / artifacts (regenerable; too big for git) ───
+checkpoints/
+kaggle_model/
+pretrained/
+protossm320_weights/
+biohack44_sed/
+pseudo_labels_*/
+sed_ens_ckpts/
+sed_ensemble_*/
+sed_swap_*/
+sed_blend*/
+sed_ownv2_only/
+own_sed*_onnx/
+own_sed_ensemble_onnx/
+public_sed/
+*.pt
+*.pt2
+*.onnx
+*.onnx.data
+*.tflite
+*.npz
+*.pkl
+*.parquet
+
+# ─── Forked public notebooks (credit upstream; do not redistribute wholesale) ───
+kaggle_notebook_*/
+cache/
+perch_cache/
+
+# ─── Logs / scratch ───
+*.log
+*.txt
+diagnostic_*.csv
+*.csv
+
+# ─── Agent / local tooling state ───
+.claude/
+attn_refiner_log*
+
+# ─── Python / tooling ───
+__pycache__/
+*.pyc
+wandb/
+.DS_Store
+.ipynb_checkpoints/
+submissions/
+references/
+
+# bundled wheels / early notebooks
+local_perch/
+*.whl
+kaggle_notebook/

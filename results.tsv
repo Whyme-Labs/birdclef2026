@@ -1,0 +1,63 @@
+run_id	metric	metric_value	memory_gb	runtime_s	status	description
+v137	public_lb	0.941	-	-	keep	baseline 4-model ensemble (Perch+SED+NFNet+V2S R2)
+v162	public_lb	0.941	-	-	keep	V137 + AudioMAE probes 5th @ 0.10 (identity)
+v174	public_lb	0.941	-	-	keep	V137 + BioLingual probes 5th @ 0.10 (identity)
+v182	public_lb	0.941	-	-	keep	V137 + Bird-MAE-Base probes 5th @ 0.10 (identity)
+v179	public_lb	0.938	-	-	discard	V137 V2S R2→V137-pseudo retrain (recipe drift breaks calibration)
+v181	public_lb	0.939	-	-	discard	V137 V2S R2→XC+V137-pseudo retrain
+v183	public_lb	0.942	-	-	keep	*BREAK* V137 + STACKED 3-probe (BirdMAE+AudioMAE+BioLingual) avg @ 0.10
+v184	public_lb	0.0000	-	-	crash	stacked probes @ 0.15 — Kaggle 9h timeout
+v185	public_lb	0.942	-	-	keep	V183 + BirdAVES (4-probe stack) — no compound
+v186	public_lb	0.941	-	-	discard	V137 + Bird-MAE FT classifier alone @ 0.10
+v187	public_lb	pending	-	-	pending	V183 + Bird-MAE FT in stack (4-source mean)
+v187	public_lb	0.0000	-	-	crash	V137 + 3probes + Bird-MAE FT averaged stack — Kaggle 9h timeout (4 ViT backbones too heavy)
+v189	local_macroAUC	0.7255	-	-	keep	PCEN+KMeans+LR token MVT (predicted 0.55-0.70, observed 0.7255 — partial; mid-range AUC)
+v190	local_macroAUC	0.8283	-	87	keep	MiMo encoder pre-RVQ embeddings probe — predicted 0.65-0.80, observed 0.8283 (signal=partial, above upper bound). Confirms MiMo encoder transfers to bird audio. Note: ≥ 0.80 threshold cleared but < 0.85 meaningful-difference threshold.
+v191	public_lb	0.0000	-	-	crash	V183 stack at weight 0.09 — Kaggle re-run completed with empty score (timeout signature like V184/V187). No noise-floor signal.
+v192	public_lb	parked	-	-	parked	V185 BirdAVES→WavJEPA. V4 fixed but Kaggle CPU = 7.6 s/chunk → 17.7h alone, won't fit 9h. Don't submit.
+v193	public_lb	0.0000	-	-	crash	V192 stride-3 — also COMPLETE with empty score (4th consecutive timeout: V184/V187/V191/V193). Kaggle infra tightened.
+v196	public_lb	0.0000	-	-	crash	V137 V2S = avg(V194_iter1, R2_fold1). LB COMPLETE empty score (5th consecutive timeout). 2× V2S forward passes too heavy for tightened Kaggle budget.
+v195	public_lb	0.941	-	-	keep	V183 stack QMix α=0.4 — landed 0.941 (V183 was 0.942 at α=0.5). Slight regression confirms α=0.5 is optimal.
+v197	public_lb	0.942	-	-	keep	V183 stack + cross-rec aggregation (alpha cap 0.25). LB 0.942 — same as V183. Aggregation didn't hurt but didn't help; blend too conservative.
+v197	public_lb	0.942	-	-	keep	V183 stack + cross-rec aggregation (alpha cap 0.25). Same as V183.
+v198	public_lb	0.942	-	-	keep	V183 stack + cross-rec aggregation (alpha cap 0.5). Same as V197/V183 — direction killed.
+v194_iter2	val_auc	0.9525	-	-	keep	Multi-iter NS iter 2 — fresh student trained on (V137 pseudo + V194_iter1 pseudo) blend. Best at epoch 7. +0.0052 over iter 1's 0.9473, +0.0071 over V137 V2S R2 fold 1's 0.9454. First confirmed multi-iter compound.
+v199	public_lb	0.937	-	-	keep	V183 stack with V2S = soup(V194_iter2 + R2_fold1). Multi-iter NS DISCONFIRMED on LB despite val_auc 0.9525 (+0.0071 over R2_fold1's 0.9454). LB regressed -0.005 vs V183. Val gains anti-transfer to soundscape distribution.
+v200	public_lb	0.0000	-	-	crash	V183 stack with TopN=1 postproc per member. Both v1 and v2 timed out (Kaggle compute tightened).
+v215	public_lb	0.940	-	-	keep	V183 stack + 3 rescue gates from public 0.946 lineage. Regressed -0.002. Disconfirms gates-without-DualSSM.
+v216	public_lb	0.0000	-	-	crash	V183 stack + 4 architecture-independent public tricks. Timed out (shift TTA × 5 too heavy for tightened Kaggle budget).
+v217	public_lb	0.943	-	-	keep	*BREAK 0.942* V183 + genus-proxy + sonotype mirror + per-taxon temp. +0.001 over V183. First lift in 30+ submissions.
+v218	public_lb	0.0000	-	-	crash	V217 + site/hour prior λ=0.4 — Kaggle COMPLETE with empty score (8th consecutive timeout). V217 is the compute ceiling; further trick stacking won't fit 9h. Pivot to Whisper distillation to FREE compute, not add it.
+v212_distill	val_auc	0.9470	-	-	keep	V212 Whisper-FT distillation. EffV2-S student trained on (V137 pseudo 50% + Whisper-FT pseudo 50%) blend. Best val_auc=0.9470 at ep 10. Matches V194 iter 1 baseline — Whisper teacher doesn't compound val. ONNX souped with R2_fold1 ready (effv2s_v212_soup.onnx, 89.6 MB). Parked.
+v219_soundscape	sl_val_auc	0.9581	-	-	keep	*STRONGEST LOCAL SIGNAL* V2S soundscape-heavy FT: 1066 labeled soundscape rows × 30 repeats (47% of training) + 35k focal. Held-out 412 rows from 18 unseen soundscape files (clean site-stratified val). Trajectory 0.9510→0.9542→0.9549→0.9548→0.9581. Souped with R2_fold1 (50/50). ONNX exported (effv2s_v219_soup.onnx). Distribution-matched signal — directly attacks soundscape calibration gap.
+v220	public_lb	0.940	-	-	keep	*ANTI-TRANSFER* V219 soundscape-FT V2S (sl_val_auc 0.9581 on held-out soundscape) regressed -0.003 vs V217. Same pattern as V194 iter2 — clean val doesn't predict LB; soundscape-FT overfits to 75 visible classes at cost of 159 missing. SOUNDSCAPE-FT V2S DISCONFIRMED.
+v221	public_lb	0.943	-	-	keep	V220 (with V219 V2S) + ProtoSSM. ProtoSSM lift +0.003 exactly canceled V219 V2S drag −0.003. Diagnostic confirms both effects.
+v222	public_lb	0.944	-	-	keep	V217 + ProtoSSM clean (NO V219 V2S). +0.001 over V217 baseline. ProtoSSM net contribution = +0.001 (modest but positive). First confirmed integration of public 0.946 lineage foundation.
+v223	public_lb	0.0000	-	-	crash	V222 + BirdNET FP32 + zero-shrinkage prior. TIMEOUT (9th consecutive). BirdNET inference on 8400 hidden files × 20 chunks at ~70ms = 3-4h pushed total over 9h. INT8 only 5% faster (BirdNET ops don't quantize well). Skip BirdNET strategy needed.
+v224	public_lb	0.0000	-	-	crash	V222 + zero-shrink prior + per-class thresholds. TIMEOUT (10th). Suspicious — V224 should be lighter than V222. Likely zero-shrinkage prior pushing test predictions to numerical extremes, destabilizing downstream stages.
+v226	public_lb	0.0000	-	-	crash	V224 + train_audio head_probe (1.1MB, 192/234 classes). TIMEOUT (11th). Same regression pattern as V224. Confirms additive issue with zero-shrink prior, not head_probe.
+v227	public_lb	0.940	-	-	discard	V222 + head_probe ONLY. REGRESSED −0.004. head_probe trained on focal recordings anti-transfers to soundscape test (same failure mode as V219). Public head_probe works for henryszy because his base is ProtoSSM-primary rank-blend; our QMix V137 base has incompatible calibration.
+v228	public_lb	0.945	-	-	keep	*FOUNDATION SWITCH* Verbatim fork of meenal public kernel = henryszy base + BirdNET 6K + 3-way rank blend. +0.001 over V222. Confirms correct foundation (no anti-transfer, no timeout). meenal's public kernel itself only ~0.945 — over-estimated earlier.
+v229	public_lb	0.946	-	-	keep	Verbatim fork of zeyad two-branch public kernel — henryszy base + BirdNET + CV9245 sidecar + CLAP + Snowflake SED + multi-postproc. 0.946. Sidecars did NOT help — clean core (V230) scores higher.
+v230	public_lb	0.947	-	-	keep	*NEW BEST* Verbatim fork of mtoshidesu public 0.947 pipeline — clean ProtoSSM + ResidualSSM + distilled SED, no sidecars. Confirmed public-kernel ceiling. +0.004 over session-start V217.
+v231	public_lb	0.946	-	-	discard	V230 + v2s_2025merged decorrelated backbone at rank 0.15. REGRESSED −0.001 vs V230. Decorrelated backbone alone doesn't help on the strong public base — same pattern as V229 sidecars.
+v232	public_lb	0.944	-	-	discard	mtoshi 0.947 + iterative pseudo-labeling. REGRESSED -0.003. Confidence-gated pseudo-labels still degraded the carefully-tuned downstream stages. Public base too locally optimal — any training perturbation hurts.
+v233	public_lb	0.945	-	-	discard	V230 + own 4-fold sidecar @ wt 0.13 — REGRESSED −0.002. Too high weight.
+v234	public_lb	0.947	-	-	keep	V230 + own 8-fold sidecar @ wt 0.05 — NEUTRAL (matches V230). First non-regression on adding own component! Validates signal direction.
+v235	public_lb	0.943	-	-	discard	V230 with in-kernel ProtoSSM REPLACED by 8-fold. REGRESSED −0.004. Downstream calibration broke.
+v236	public_lb	0.944	-	-	discard	V230 with in-kernel ProtoSSM modified (d=256, 120ep). REGRESSED −0.003. Modifying in-kernel base hurts.
+v237	public_lb	0.947	-	-	discard	V230 + 24-fold sidecar @ wt 0.05 — NEUTRAL (matches V234). More folds didn't help. Sidecar path exhausted.
+v238	public_lb	0.948	-	-	keep	*NEW BEST +0.001* Verbatim fork of youssefmo942009/lb-0-948 public 0.948 kernel. Rank: #539 → #172 (silver borderline, top 5%).
+v239	public_lb	0.948	-	-	keep	Fork of mtoshidesu/test-0-948. 0.948 ✓ Different recipe than V238 — shake-up diversity.
+v240	public_lb	0.945	-	-	discard	Fork of vyankteshdwivedi/protossm-sed-0-948 (head_probe). REGRESSED −0.003. Same pattern as our V227 head_probe attempt.
+v241	public_lb	0.948	-	-	keep	Fork of adarsh5harma/v54-lb-0948-swap. 0.948 ✓ 3rd successful recipe.
+v242	public_lb	0.947	-	-	discard	Fork of mtoshidesu/lb-improved. 0.947 not 0.948 — title was misleading.
+v194_iter2_prep	building	in_progress	-	-	in_progress	V194_iter1 pseudo-gen on training audio (~127k chunks, GPU job). Output → pseudo_labels_v194_iter1/raw_predictions.csv for iter 2 training.
+v194_iter1	val_auc	0.9473	-	22500	keep	Multi-iter NS iter 1 — fresh EffV2-S student trained on V137 pseudo (107k) + soundscape (1478) + focal labels, warm-start R2 fold 0, 10 epochs, lr 5e-5. Best val_auc=0.9473 at epoch 8 (matches V179's 0.9474 → LB 0.938 regression). Single-iter saturates at calibration limit; iter 2+ needed for compounding.
+v195	public_lb	pending	-	-	pending	V183 with QMix α=0.4 (was 0.5). Single-line change tests rank-vs-prob blend ratio. Same compute as V183. Pushed; tomorrow.
+mimo_onnx_attempt	engineering	abandoned	-	-	discard	MiMo encoder ONNX export technically works (output match 3e-5) but fp32 splits into hundreds of .data external-format files; INT8 dynamic quant breaks on variable-length-packing ops (43% relative error). Speed: 597 ms/chunk fp32, 500 ms/chunk int8 — 1.19x speedup not enough. Park until V192 LB validates the orthogonality direction.
+v190b	local_macroAUC	0.8323	-	99	keep	MiMo mean+max+std (3840-d) — predicted 0.83-0.86, observed 0.8323. Marginal +0.004 vs V190 mean-only.
+v190b_mlp	local_macroAUC	0.8147	-	-	discard	MiMo mean+max+std + MLP probe — overfits with 1478 samples; LR is the sweet spot.
+ortho_6	local_macroAUC	0.6096	-	-	keep	6-probe (incl. AudioMAE+MiMo+WavJEPA): best k=5 = drop BirdAVES (BirdMAE+AudioMAE+BioLingual+MiMo+WavJEPA). BirdAVES anti-additive in every config.
+ortho_4	local_macroAUC	0.5908	-	-	keep	4-probe orthogonality (BirdMAE+BioLingual+BirdAVES+MiMo): equal-avg AUC 0.5908; learned weights zero out BirdAVES → 0.5933.
+ortho_5	local_macroAUC	0.5952	-	-	keep	5-probe (BirdMAE+BioLingual+BirdAVES+MiMo+WavJEPA): best k=4 = BirdMAE+BioLingual+MiMo+WavJEPA = 0.5952; BirdAVES is anti-additive (k=5 drops to 0.5931).
