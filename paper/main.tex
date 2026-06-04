@@ -43,8 +43,7 @@
 %% --- conference / venue line ----------------------------------------------
 %% TODO verify the exact \conference macro spelling for the CLEF 2026 volume.
 \conference{CLEF 2026: Conference and Labs of the Evaluation Forum,
-            September 2026, % TODO verify dates/venue for CLEF 2026
-            Location TBD}
+            September 21--24, 2026, Jena, Germany}
 
 \title{Mapping the Public Ceiling: Negative Results and a Platform-Constraint
        Hypothesis for BirdCLEF+ 2026}
@@ -230,6 +229,25 @@ Each falsified direction would otherwise have consumed one-to-many submission sl
 and a day of latency. We regard the leak-aware gate methodology
 (\S\ref{sec:discussion}) as a small transferable contribution for code-competitions
 with daily quotas and slow scoring.
+
+\subsection{An agentic experimentation workflow}
+\label{sec:agentic}
+This study was conducted as a human-directed, AI-agent-executed workflow: a coding
+agent (Anthropic's Claude, driven via Claude Code) carried out the loop of writing
+each gate, launching cloud (Modal) training and evaluation jobs, parsing the
+results, and proposing the next hypothesis, under human review at each decision
+point. The discipline the agent enforced is exactly what made a five-slots-per-day
+budget tractable: every hypothesis was turned into a sub-dollar offline measurement
+and \emph{gated} before a submission was spent, and dead ends were recorded with
+numbers rather than re-litigated by intuition. The agent also caught failures a
+human might have shrugged off --- for example, it surfaced that our compare-to-teacher
+comparison was leak-biased (\S\ref{sec:trap}) only because it logged and diffed the
+per-class win counts. We document this because the organizers explicitly invited
+participants to describe AI-assisted and autonomous workflows; in our case the
+agentic loop was not a coding convenience but the mechanism that let a small team
+exhaustively map the ceiling within the platform's constraints. All experiments
+were designed under human direction and every reported number was manually verified
+(see the AI-use disclosure before the references).
 
 %% ===========================================================================
 \section{Systematic negative results}
@@ -542,6 +560,17 @@ measurement framework and the negative-results map layered on top.
 We thank the BirdCLEF+ 2026 organizers and the Kaggle community whose open
 notebooks constitute the baseline studied here.
 \end{acknowledgments}
+
+%% ===========================================================================
+\section*{Declaration on Generative AI}
+AI-assisted tools (in particular Anthropic's Claude, via the Claude~Code agent;
+see \S\ref{sec:agentic}) were used during the development of this work to aid in
+programming, debugging, running and parsing experiments, grammar and spelling
+checks, literature review, and experimentation. All experiments were designed and
+configured under the authors' direction, all results were manually verified, and
+all scientific interpretations and conclusions reflect the authors' own judgment.
+The authors take full responsibility for the accuracy, integrity, and originality
+of the work presented in this paper.
 
 %% ===========================================================================
 %% Bibliography
