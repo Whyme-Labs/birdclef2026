@@ -1,0 +1,83 @@
+%% ===========================================================================
+%% refs.bib — BirdCLEF+ 2026 working note
+%%
+%% These are STUB entries with best-known metadata. Each is marked
+%% "% TODO verify" — the user MUST confirm authors, years, venues, URLs, and
+%% (where applicable) add DOIs before camera-ready. We deliberately do NOT
+%% fabricate exact page numbers, DOIs, or full author lists we are unsure of.
+%% ===========================================================================
+
+%% Perch v2 / Google bird-vocalization-classifier (embedding backbone).
+%% TODO verify — Perch is released by Google Research; cite the model card /
+%% technical report. The bird-vocalization-classifier is distributed on
+%% Kaggle Models / TF-Hub. Confirm the canonical citation (report vs. dataset).
+@misc{perch,
+  title        = {Perch: A Bird Vocalization Classifier (bird-vocalization-classifier)},
+  author       = {{Google Research}},
+  year         = {2023},
+  howpublished = {Model release, Kaggle Models / TensorFlow Hub},
+  note         = {Frozen embedding + 234-logit classifier backbone (Perch v2). % TODO verify authors/year/URL},
+  url          = {https://www.kaggle.com/models/google/bird-vocalization-classifier}
+}
+
+%% Bird-MAE — masked autoencoder pretrained for bird/bioacoustic audio.
+%% TODO verify — confirm authors, year, and whether arXiv or a venue paper.
+@misc{birdmae,
+  title        = {Bird-MAE: Masked Autoencoders for Bird Sound Representation Learning},
+  author       = {{Bird-MAE authors}},
+  year         = {2024},
+  howpublished = {Preprint},
+  note         = {% TODO verify authors, year, venue/arXiv id, and exact title},
+}
+
+%% AudioMAE — Huang et al., masked autoencoders that listen.
+%% TODO verify — confirm full author list, NeurIPS year, and arXiv id.
+@inproceedings{audiomae,
+  title     = {Masked Autoencoders that Listen},
+  author    = {Huang, Po-Yao and others},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022},
+  note      = {% TODO verify full author list and exact pages/volume},
+}
+
+%% Mamba / selective state space models — Gu & Dao.
+%% TODO verify — confirm arXiv id (commonly 2312.00752) and year.
+@article{mamba,
+  title   = {Mamba: Linear-Time Sequence Modeling with Selective State Spaces},
+  author  = {Gu, Albert and Dao, Tri},
+  journal = {arXiv preprint arXiv:2312.00752},
+  year    = {2023},
+  note    = {% TODO verify arXiv id and any later published version},
+}
+
+%% Noisy Student self-training — Xie et al.
+%% TODO verify — confirm CVPR 2020 venue and full author list.
+@inproceedings{noisystudent,
+  title     = {Self-training with Noisy Student Improves ImageNet Classification},
+  author    = {Xie, Qizhe and Luong, Minh-Thang and Hovy, Eduard and Le, Quoc V.},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2020},
+  note      = {% TODO verify pages},
+}
+
+%% Knowledge distillation — Hinton, Vinyals, Dean.
+%% TODO verify — NeurIPS 2014 Deep Learning Workshop / arXiv:1503.02531.
+@article{distillation,
+  title   = {Distilling the Knowledge in a Neural Network},
+  author  = {Hinton, Geoffrey and Vinyals, Oriol and Dean, Jeff},
+  journal = {arXiv preprint arXiv:1503.02531},
+  year    = {2015},
+  note    = {% TODO verify venue (NIPS 2014 Deep Learning Workshop) and arXiv id},
+}
+
+%% Prior BirdCLEF / LifeCLEF overview (annual competition overview paper).
+%% TODO verify — replace with the specific LifeCLEF/BirdCLEF overview year(s)
+%% you wish to cite (e.g. the BirdCLEF 2024 or 2025 overview in CEUR-WS), with
+%% correct authors, volume, and pages.
+@inproceedings{lifeclef-overview,
+  title     = {Overview of BirdCLEF: Bird Species Identification in Soundscapes},
+  author    = {Kahl, Stefan and others},
+  booktitle = {Working Notes of CLEF: Conference and Labs of the Evaluation Forum (CEUR-WS)},
+  year      = {2024},
+  note      = {% TODO verify — pick the specific overview edition(s), authors, volume, pages},
+}

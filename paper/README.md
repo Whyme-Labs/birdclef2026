@@ -1,0 +1,3 @@
+# BirdCLEF+ 2026 working note — LaTeX source
+
+This paper targets the **CEUR-WS single-column working-note template** used for CLEF / LifeCLEF working notes: document class **`ceurart`** (the "CEURART" bundle, published per-volume at `http://ceur-ws.org/Vol-XXX/`). To build, obtain `ceurart.cls` from the CEUR-WS template bundle (Overleaf "CEURART" template or CTAN) and place it alongside `main.tex`, then compile with **`pdflatex` + `bibtex`**: `pdflatex main` → `bibtex main` → `pdflatex main` → `pdflatex main`. Note: the author name, affiliation, email, ORCID, the CEUR volume number, and all bibliography entries are **placeholders / stubs** (search the sources for `% TODO`) and must be filled in and verified before submission.

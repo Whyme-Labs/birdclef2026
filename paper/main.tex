@@ -1,0 +1,553 @@
+%% ===========================================================================
+%% Mapping the Public Ceiling: Negative Results and a Platform-Constraint
+%% Hypothesis for BirdCLEF+ 2026
+%%
+%% CEUR-WS single-column working-note (CLEF / LifeCLEF) — document class ceurart.
+%%
+%% REQUIRED FILES / PACKAGES
+%%   - ceurart.cls           (obtain from http://ceur-ws.org/Vol-XXX/ ; the
+%%                            "CEURART" LaTeX bundle on Overleaf / CTAN.
+%%                            % TODO the user must place ceurart.cls in this dir
+%%                            or install the CEURART template.)
+%%   - amsmath, amssymb       (math)
+%%   - booktabs               (Table 1, \toprule/\midrule/\bottomrule)
+%%   - graphicx               (figures, if any added later)
+%%   - hyperref               (URLs; usually loaded by ceurart already — guarded)
+%%   - url                    (\url in bibliography)
+%%
+%% COMPILE
+%%   pdflatex main
+%%   bibtex   main
+%%   pdflatex main
+%%   pdflatex main
+%%
+%% NOTE author identity, affiliation, email, and the CEUR volume number are
+%% placeholders the user MUST fill in before submission (search for "% TODO").
+%% ===========================================================================
+
+\documentclass{ceurart}
+
+%% --- packages -------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}   % for the Table 1 rules
+\usepackage{graphicx}
+% hyperref is normally pulled in by ceurart; load defensively only if absent.
+\makeatletter
+\@ifpackageloaded{hyperref}{}{\usepackage{hyperref}}
+\makeatother
+
+%% ===========================================================================
+\begin{document}
+
+%% --- conference / venue line ----------------------------------------------
+%% TODO verify the exact \conference macro spelling for the CLEF 2026 volume.
+\conference{CLEF 2026: Conference and Labs of the Evaluation Forum,
+            September 2026, % TODO verify dates/venue for CLEF 2026
+            Location TBD}
+
+\title{Mapping the Public Ceiling: Negative Results and a Platform-Constraint
+       Hypothesis for BirdCLEF+ 2026}
+
+%% --- author block ---------------------------------------------------------
+%% TODO the author name(s) below are PLACEHOLDERS. Replace "Author Name" with
+%% the real author identity, "Whyme Labs" affiliation details, and the email
+%% before submission. Do NOT submit with placeholders.
+\author[1]{Author Name}[%
+  % orcid=0000-0000-0000-0000, % TODO add ORCID if available
+  email=author@example.org,    % TODO real email
+]
+
+\address[1]{Whyme Labs % TODO full affiliation / address}
+
+%% --- abstract -------------------------------------------------------------
+\begin{abstract}
+Most competition working notes describe a winning recipe. This note deliberately
+does the opposite, and argues the inversion is useful: a systematic,
+measurement-driven account of \emph{why a strong shared public baseline could not
+be beaten with consumer-scale resources}, and what that reveals about the
+structure of modern bioacoustic competitions. By mid-competition a single
+architectural pattern --- a frozen Perch~v2 embedding model, a Light-ProtoSSM
+sequence head, a distilled Sound-Event-Detection (SED) CNN, and a
+taxonomy-smoothing post-processor --- had been openly shared and converged on a
+public-leaderboard score of \textbf{0.950}, where (as of the public-LB snapshot
+on 2~June~2026) roughly \textbf{890 of 4243 teams scored in the
+$[0.950, 0.951)$ band}. We treat this plateau as an object of study rather than a
+target. We built a \emph{measurement-gate} framework that reduces each
+improvement hypothesis to a cheap offline quantity and tests it \emph{before}
+spending one of five daily submission slots, and used it to test every lever
+available to a small team: own-trained SEDs, foundation-model linear probes,
+rare-taxon specialists, post-hoc calibration tricks, and architecturally-diverse
+model ensembles. Each was neutral or negative. Two observations we found
+practically consequential in this setting: (1)~the public components' apparent
+near-perfect held-out accuracy is \emph{optimistic by construction} --- they are
+fit on the only in-domain labelled audio available for validation --- which
+inverts the most natural offline comparison and makes held-out macro-AUC an
+unreliable basis for ranking a challenger against the baseline; and (2)~the
+binding constraint for a small team is not modeling skill but \textbf{platform
+limits} --- a ${\sim}1$~MB notebook-size cap and a 90-minute CPU runtime budget
+--- which physically forbid the one technique with genuine headroom (ensembling
+multiple full foundation-model pipelines). On a single held-out split,
+architecturally-diverse CNN ensembling improved macro-AUC by \textbf{+0.021} over
+its best member (a leak-controlled, directional result, \S\ref{sec:ensemble}),
+yet that ensemble could not be deployed within the runtime envelope. We close
+with a hypothesis, offered explicitly as conjecture since the leaders' solutions
+are private: in the foundation-model era a public pipeline assembled from large
+pretrained components plus a community-discovered post-processing trick is a
+remarkably hard floor, and we conjecture the residual gap to the leaders is paid
+largely in up-front training compute rather than inference-time cleverness. All
+code and the measurement-gate harness are released openly.
+\end{abstract}
+
+%% --- keywords -------------------------------------------------------------
+\begin{keywords}
+  bioacoustics \sep
+  BirdCLEF \sep
+  foundation models \sep
+  negative results \sep
+  ensemble diversity \sep
+  knowledge distillation \sep
+  data leakage
+\end{keywords}
+
+\maketitle
+
+%% ===========================================================================
+\section{Introduction}
+\label{sec:intro}
+
+BirdCLEF+ 2026 asked participants to identify which of 234 species --- birds,
+amphibians, mammals, reptiles, and insects --- vocalize in 1-minute soundscapes
+from the Brazilian Pantanal, an important conservation-monitoring task. Submissions
+are CPU-only Kaggle notebooks evaluated on a hidden set of ${\sim}600$ recordings,
+scored by macro-averaged ROC-AUC that skips classes with no true positives in the
+test set; the runtime budget is \textbf{90 minutes}, internet is disabled, and
+each team may submit five times per day.
+
+The competition exhibited an unusually sharp \emph{public-kernel monoculture}. A
+lineage of openly-shared notebooks (``Ensemble-of-Solutions'', EoS.x, and their
+forks) raised the public ceiling in discrete, community-wide jumps ---
+$0.928 \to 0.948 \to 0.949 \to \textbf{0.950}$ --- each jump driven by one new
+mechanism that the field adopted within days. The cumulative public-LB
+distribution (snapshot 2~June~2026, 4243 teams) was top-heavy and then sharply
+flat: \textbf{11 teams $\geq 0.96$}, \textbf{42 $\geq 0.955$},
+\textbf{252 $\geq 0.951$}, and \textbf{1140 $\geq 0.950$} --- i.e.\ ${\sim}890$
+teams whose best public score fell in the narrow $[0.950, 0.951)$ band, the large
+population running the shared pipeline essentially unchanged. (Public-LB counts
+drift as teams resubmit; we report one dated snapshot.)
+
+We entered this monoculture late and spent the competition on one question:
+\emph{can a small team, on a single consumer GPU plus a small cloud budget, add
+anything to the public 0.950 pipeline that survives contact with the hidden test?}
+Our answer is negative. Each hypothesis was reduced to a measured quantity and
+gated before a submission was spent. The contribution of this note is therefore
+not a model but a \textbf{map}: what we tried, the numbers, the structural reason
+each path failed, and a small reusable methodology for resource-constrained
+competitors. Negative results reported with measurements are comparatively rare
+in this venue, since most write-ups come from teams that succeeded; we hope the
+surrounding terrain is useful.
+
+%% ===========================================================================
+\section{Related work}
+\label{sec:related}
+
+BirdCLEF has run annually since 2014; recent editions converged on
+transfer-learning from large audio/bird foundation models followed by sequence
+modeling and heavy ensembling of diverse CNNs (the consistent ingredient in
+winning solutions across 2023--2025)~\cite{lifeclef-overview}. Our public
+baseline reflects this: Perch~v2~\cite{perch} as the embedding backbone, a
+ProtoSSM-style selective-state-space~\cite{mamba} head over its embeddings, and a
+distilled SED CNN. Our own-model attempts draw on noisy-student
+self-training~\cite{noisystudent} (pseudo-labeling unlabeled soundscapes with a
+teacher, then training a student) and on foundation-model linear probing
+(Bird-MAE~\cite{birdmae}, AudioMAE~\cite{audiomae}). Two themes we engage
+critically are (i)~knowledge distillation's ceiling~\cite{distillation} --- a
+student trained on a teacher's outputs is bounded by that teacher --- and
+(ii)~ensemble diversity --- that decorrelated architectures, averaged, beat any
+single member. Our contribution relative to this literature is empirical and
+negative: we quantify \emph{where each of these reliably-useful techniques stops
+working} under this competition's specific data-leakage and platform constraints.
+
+%% ===========================================================================
+\section{Anatomy of the public 0.950 pipeline}
+\label{sec:anatomy}
+
+The converged public solution is a four-stage rank ensemble:
+
+\begin{enumerate}
+  \item \textbf{Perch~v2}~\cite{perch} --- Google's bird-vocalization foundation
+        model --- produces a 1536-d embedding and 234-logit score per 5-second
+        window. It is the single most expensive inference stage and the dominant
+        signal.
+  \item \textbf{Light-ProtoSSM} --- a small (${\approx}0.75$--$5.8$~M-parameter)
+        bidirectional selective-state-space~\cite{mamba} head with prototype
+        classification and cross-window attention --- is fit (or loaded
+        pre-trained) on Perch embeddings of the labelled soundscapes, contributing
+        ${\sim}60\%$ of the rank blend.
+  \item \textbf{Distilled SED} --- a 5-fold EfficientNet-B0 sound-event detector on
+        $256 \times 313$ log-mel input, distilled~\cite{distillation} from a
+        stronger teacher ensemble, contributing ${\sim}40\%$.
+  \item \textbf{\texttt{TAX\_SMOOTHING}} --- the final-jump mechanism
+        ($0.949 \to 0.950$): each species' score is pulled slightly toward the mean
+        of its genus- and class-siblings ($\alpha_{\text{genus}} \approx 0.15$,
+        $\alpha_{\text{class}} \approx 0.05$), exploiting taxonomic correlation
+        among co-occurring Pantanal taxa.
+\end{enumerate}
+
+We verified directly that every public 0.950 notebook is a scalar-tuned variant of
+this stack: forks differing in post-processing (BirdNET sidecars, PCEN,
+out-of-fold gating, iterative smoothing) and even one with a different ProtoSSM
+implementation all returned exactly 0.950 or below.
+
+%% ===========================================================================
+\section{Method: measurement gates before submission slots}
+\label{sec:method}
+
+The scarce resources here are not FLOPs but \textbf{submission slots} (five per
+day, each scored only after a multi-hour hidden-test rerun) and \textbf{trustworthy
+validation signal} (the labelled audio is tiny and, as \S\ref{sec:trap} shows,
+optimistically biased toward the public models). Our central methodological move
+was to never spend a slot on an unmeasured hypothesis. For each idea we built an
+offline \emph{gate} on cloud GPU (Modal) or the local GPU:
+
+\begin{itemize}
+  \item \textbf{\texttt{compare\_to\_teacher}} --- train a candidate SED with a
+        clean \emph{file-level} hold-out of 13 labelled soundscapes; run the public
+        distilled SED on the \emph{same} held-out files; report both macro-AUCs and
+        the per-class win count.
+  \item \textbf{\texttt{eval\_*\_probe} / \texttt{eval\_rare\_taxa}} --- train
+        linear probes on frozen foundation-model embeddings; evaluate against the
+        public SED \emph{sliced to specific taxa}; measure orthogonality (how many
+        classes the candidate strictly beats the baseline on).
+  \item \textbf{\texttt{eval\_sed\_ensemble}} --- measure whether an ensemble's
+        macro-AUC exceeds its best single member (a leak-free decorrelation test,
+        independent of any public teacher).
+\end{itemize}
+
+Each gate ran in minutes on a single cloud GPU at low cost (we did not log a
+per-gate cost breakdown; total cloud spend across the study was a few US dollars).
+Each falsified direction would otherwise have consumed one-to-many submission slots
+and a day of latency. We regard the leak-aware gate methodology
+(\S\ref{sec:discussion}) as a small transferable contribution for code-competitions
+with daily quotas and slow scoring.
+
+%% ===========================================================================
+\section{Systematic negative results}
+\label{sec:negative}
+
+Table~\ref{tab:levers} consolidates the experiments. Each row was decided by a gate
+(offline macro-AUC, leak-aware) and/or a leaderboard submission.
+
+\begin{table}[t]
+  \centering
+  \caption{Levers tested against the public 0.950 baseline. (``LB'' = public
+           leaderboard at submission time; held-out figures are single-split
+           offline gates, \S\ref{sec:method}.)}
+  \label{tab:levers}
+  \small
+  \begin{tabular}{@{}p{0.30\linewidth} p{0.24\linewidth} p{0.12\linewidth} p{0.24\linewidth}@{}}
+    \toprule
+    \textbf{Lever} & \textbf{Measured outcome} & \textbf{Verdict} & \textbf{Mechanism of failure} \\
+    \midrule
+    Own SED, focal-trained
+      & LB 0.931
+      & $-0.019$
+      & distilled copy of a weaker teacher \\
+    Own SED, soundscape noisy-student
+      & LB 0.933
+      & $-0.017$
+      & bounded by the public SED's own pseudo-labels \\
+    \texttt{compare\_to\_teacher} (clean 13-file hold-out)
+      & student 0.910 vs public \textbf{0.994}
+      & ---
+      & but the 0.994 is leak-optimistic (\S\ref{sec:trap}) \\
+    Bird-MAE / AudioMAE linear probe
+      & beats public on \textbf{0/27} classes
+      & dominated
+      & no orthogonal signal to blend \\
+    Rare-taxon (frog/insect) specialist
+      & beats public on \textbf{0/16} rare classes
+      & dominated
+      & public SED already 0.991 on rare taxa \\
+    Post-hoc tricks (BirdNET, co-occurrence, genus-proxy, iterative smooth)
+      & LB 0.948--0.950
+      & neutral/neg.
+      & perturb a tight calibrated equilibrium \\
+    \textbf{Diverse-CNN SED ensemble} (4 archs)
+      & \textbf{0.954} vs best single \textbf{0.933} (single split)
+      & \textbf{+0.021}
+      & gain real but undeployable (\S\ref{sec:platform}) \\
+    Diverse-ensemble \emph{swapped} into pipeline
+      & LB 0.945
+      & $-0.005$
+      & our members individually $<$ public SED on hidden test \\
+    Diverse-ensemble \emph{added} (7 or 9 SEDs)
+      & runtime timeout
+      & ---
+      & 90-min CPU budget exceeded \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Own-trained SED cannot match the distilled public SED}
+\label{sec:ownsed}
+
+We trained EfficientNet-B0 SEDs two ways: focal-recording-only (public LB
+\textbf{0.931}) and a noisy-student~\cite{noisystudent} variant on 10{,}592
+pseudo-labelled soundscapes $\to$ 127{,}896 soft-labelled windows (public LB
+\textbf{0.933}). Both regressed ${\sim}0.017$--$0.019$ below the baseline when
+blended in. The gate indicated the cause: on a single 13-file hold-out the public
+SED scored \textbf{0.994} versus our student's \textbf{0.910} --- though that 0.994
+is optimistically biased (\S\ref{sec:trap}). A single own-trained CNN on one GPU
+does not reach a model distilled from a strong teacher ensemble --- and, because
+our students learn from the public SED's \emph{own} pseudo-labels, they are its
+distilled copies, structurally bounded below it~\cite{distillation}.
+
+\subsection{The validation trap: optimistic held-out for public components}
+\label{sec:trap}
+
+The gate number above (public SED 0.994 on hold-out) is \textbf{misleading in a way
+worth making explicit}, because it determined how we validated everything
+afterward. The public Light-ProtoSSM is, by inspection of the public notebook, fit
+on the labelled soundscapes (it trains on them in-kernel); the distilled SED was
+plausibly distilled with them in scope. Either way, the public pipeline's 0.994 on
+a held-out \emph{subset of those same soundscapes} is optimistic by construction,
+whereas our genuinely-held-out student is scored fairly --- an asymmetric
+comparison. The gap between the public components' ${\sim}0.99$ on labelled audio
+and the full pipeline's 0.950 / 0.942 on the hidden test is consistent with this
+optimism. The practical consequence: \textbf{an offline comparison of a challenger
+against a public component on the labelled soundscapes is biased in the baseline's
+favour}, so held-out macro-AUC cannot reliably rank a small team's model against
+the shared pipeline. This is, of course, an instance of the textbook
+train/test-leakage pitfall; our contribution is not the concept but the
+demonstration that, in this competition, it silently invalidates the \emph{most
+natural} validation a competitor would reach for, and the consequent discipline of
+preferring \emph{leak-controlled relative} gates (e.g.\ ensemble-vs-best-single,
+\S\ref{sec:ensemble}) over absolute comparisons to the baseline. (Whether the
+precise mechanism is label leakage or in-domain over-fit plus distribution shift,
+the methodological conclusion is identical.)
+
+\subsection{Foundation-model probes are strictly dominated}
+\label{sec:probes}
+
+Linear probes on Bird-MAE-Base~\cite{birdmae} and AudioMAE~\cite{audiomae}
+embeddings beat the public SED on \textbf{0/27} held-out classes with positives;
+every rank-blend weight monotonically \emph{reduced} macro-AUC. A
+strictly-dominated source cannot improve a calibrated ensemble --- it can only
+dilute it.
+
+\subsection{Rare-taxon specialists: a plausible premise, falsified}
+\label{sec:raretaxa}
+
+We hypothesized the bird-tuned pipeline would be weak on rare
+\emph{Amphibia/Insecta} --- stationary frog/insect textures unlike bird syllables
+--- and that a texture-oriented model (AudioMAE~\cite{audiomae}) could win there.
+Sliced to 16 measurable rare classes (954 held-out positives), the gate refuted it:
+the public SED scored \textbf{0.991} on exactly these taxa (it had learned them from
+the labelled soundscapes), and our specialists beat it on \textbf{0/16}
+(Bird-MAE 0.876, AudioMAE 0.799 macro-AUC on the slice). External audio cannot
+rescue the data-starved tail either: of 53 classes with $<10$ training recordings,
+Xeno-Canto (a bird archive) covered 1, and 28 --- including the \texttt{sonXX}
+insect ``morphotypes'' --- are competition-internal labels with no scientific name
+and thus no external data anywhere.
+
+\subsection{Post-hoc tricks perturb a tight equilibrium}
+\label{sec:posthoc}
+
+Genus-proxy boosting, sonotype mirroring, per-taxon temperature, BirdNET 3-way
+blending, cross-class co-occurrence boosting, and iterative second-pass smoothing
+each layered onto the 0.950 base returned 0.948--0.950 (neutral-to-negative). The
+public pipeline's calibration chain (priors, rank-aware scaling, power
+optimization, threshold tuning, taxonomy smoothing) is a tight equilibrium;
+post-hoc reorderings disturb it more than they help. Tellingly, the community's own
+last $+0.001$ came not from \emph{adding} a trick but from \texttt{TAX\_SMOOTHING}
+applied \emph{inside} the calibrated chain at the right scale.
+
+\subsection{Diverse-CNN ensembling: a real gain that cannot be deployed}
+\label{sec:ensemble}
+
+The most reliable technique in the field is ensembling architecturally-diverse
+CNNs, and we used it as a \emph{controlled internal} test rather than a comparison
+to the (leak-flattered) baseline. We trained four diverse SED backbones ---
+EfficientNetV2-S, ConvNeXt-Small, EfficientNet-B3, SEResNeXt50. Crucially, the 13
+hold-out files were excluded from \textbf{all} four members' training,
+\emph{including the soundscape pseudo-label generation} --- so the
+ensemble-vs-member comparison is leak-controlled with respect to that split (both
+sides are equally held out, unlike the baseline of \S\ref{sec:trap}). On that
+single split the four-model rank ensemble scored \textbf{0.9542} versus the best
+single member's \textbf{0.9332}, a \textbf{+0.021} improvement --- the expected
+diversity effect, observed cleanly. We stress this is a \emph{single-split point
+estimate}: we did not run multiple folds or seeds and report no confidence
+interval, so $+0.021$ should be read as directional corroboration of the well-known
+diversity benefit, not a precise effect size (see \S\ref{sec:threats}).
+
+This still could not break 0.950, for two largely independent reasons that are the
+crux of this note. First, \emph{deployment runtime}: adding the four SEDs to the
+public pipeline ($5 + 4 = 9$, or even $5 + 2 = 7$ inferences) exceeded the
+90-minute budget and timed out --- a wall independent of model quality. Second,
+\emph{substitution cost}: swapping two public SEDs for two of ours (holding the
+count at 5, runtime-safe) scored \textbf{0.945} on the LB. We read this single
+point cautiously: it is \emph{consistent with} our members being individually
+weaker than the public SED on the genuine hidden test (where the baseline's leak
+advantage vanishes), but it is confounded --- the rank-blend weights were not
+re-tuned for the substitution, and our members were only half-trained when a
+cloud-budget cap froze them, which independently predicts a drop. The runtime
+conclusion is therefore firm; the substitution conclusion is suggestive, not
+proven. What the two together establish is narrower but solid: \emph{we could not
+realize the diversity gain within the platform envelope}, whether because of
+runtime (certain) or insufficient member quality (likely, given half-training) or
+both.
+
+%% ===========================================================================
+\section{The platform-constraint finding}
+\label{sec:platform}
+
+The deeper lesson generalizes beyond SEDs. The one strategy with real headroom over
+a converged baseline is to \textbf{ensemble multiple full, diverse pipelines}. We
+attempted to combine two genuinely different public 0.950 pipelines (distinct
+ProtoSSM implementations and auxiliary models) in one notebook. This is blocked by
+\emph{platform physics}, not modeling:
+
+\begin{itemize}
+  \item \textbf{Notebook-size cap (${\sim}1$~MB).} The two full pipelines
+        concatenated to 1.08~MB and were rejected at upload; a single pipeline is
+        0.77~MB.
+  \item \textbf{Runtime cap (90~min CPU).} Each pipeline's Perch pass nearly fills
+        the budget; two passes time out --- the same wall that killed our
+        additive-SED ensembles.
+\end{itemize}
+
+These limits are, we argue, \emph{a} structural reason for the monoculture: heavy
+foundation-model pipelines cannot be ensembled at inference inside the platform, so
+the public field --- which mostly forks the same heavy pipeline --- is funnelled
+into a single 0.950 cluster. We then \emph{conjecture} (the leaders' solutions are
+private, so this is not established) that the teams above 0.95 escape the funnel by
+pre-training their own lighter models that are individually competitive yet cheap
+enough to run several within 90 minutes, paying the cost up front in training
+compute that a late, small entrant on one consumer GPU cannot match. This
+conjecture has at least an empirical prior: published BirdCLEF 2023--2025 winning
+solutions~\cite{lifeclef-overview} consistently rely on \emph{ensembles of several
+independently-trained CNNs} run within the inference budget, rather than a single
+shared backbone. We present it as the most parsimonious hypothesis consistent with
+our measurements, not as a demonstrated fact about the 11 teams $\geq 0.96$.
+
+%% ===========================================================================
+\section{Threats to validity}
+\label{sec:threats}
+
+We state the limits of these conclusions plainly.
+(i)~\textbf{Single-split, no error bars.} Our offline gates use one fold and a small
+hold-out (13 files; 32 classes with positives for the absolute gates, 16 rare
+classes for \S\ref{sec:raretaxa}); we report point estimates without confidence
+intervals. The headline $+0.021$ ensemble gain (\S\ref{sec:ensemble}) is therefore
+directional corroboration of a known effect, not a measured effect size;
+multi-fold/multi-seed validation with CIs is the most important piece of future
+work, which our deleted cloud infrastructure prevented us from adding before
+submission.
+(ii)~\textbf{The leak claim is partly inferential.} We observe that the public
+ProtoSSM trains on the labelled soundscapes in-kernel, but only infer the SED's
+training scope from the 0.99-vs-0.95 optimism gap; the methodological conclusion
+holds under either label leakage or in-domain over-fit plus distribution shift.
+(iii)~\textbf{Half-training cuts two ways.} The diverse ensemble was half-trained
+when a budget cap froze it. This understates its absolute ceiling (so the
+\emph{deployment-wall} conclusion is conservative --- a stronger ensemble would
+still time out), but it is also a genuine confound for the \emph{substitution}
+result (\S\ref{sec:ensemble}): a fully-trained ensemble might have made the
+runtime-safe swap competitive, so we do not claim the swap result proves our
+members are intrinsically inferior.
+(iv)~\textbf{The leaders are a conjecture.} Our characterization of the $>0.95$
+teams (\S\ref{sec:platform}) is unverified --- their solutions are private.
+(v)~\textbf{Scope.} All scores use this competition's masked macro-AUC on its
+specific data; the \emph{platform-constraint} and \emph{validation-trap} lessons
+should transfer qualitatively to similar code-competitions, but the exact
+thresholds will not.
+
+%% ===========================================================================
+\section{What moved, and final standing}
+\label{sec:standing}
+
+The only positive movement available to us was tracking the community's
+\texttt{TAX\_SMOOTHING} jump to 0.950 and choosing robust final submissions.
+Recognizing the ${\sim}890$-team public tie, we selected two maximally-divergent
+0.950 pipelines to hedge the public$\to$private shift. The shift proved mild and
+uniform ($0.950 \to \textbf{0.942}$ across our picks); a small robustness signal
+favoured the more battle-tested calibration (the older EoS.8 base held 0.942 while
+the newer EoS.9 fell to 0.941). Final standing: \textbf{289 / 4243, bronze}.
+
+%% ===========================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+Three takeaways we believe are non-obvious and worth recording:
+
+\begin{enumerate}
+  \item \textbf{Optimistic held-out can invert your conclusions.} When public
+        components are fit on the only in-domain labelled data available for
+        validation, offline comparisons systematically flatter them.
+        Resource-constrained teams should treat such comparisons as \emph{lower
+        bounds} on their own models' relative quality, and prefer leak-free
+        relative gates.
+  \item \textbf{Leak-aware offline gating.} Validating locally before submitting is
+        standard; the twist that mattered here is \emph{what} to validate against.
+        Because absolute held-out comparison to the baseline is biased (point~1), we
+        gated on \emph{relative} and \emph{orthogonality} signals instead
+        (ensemble-vs-best-single; per-class win counts against the public SED). This
+        let us reach a decision on five directions within the budget a blind
+        approach would spend on one, and we recommend the leak-aware variant
+        specifically for code-competitions where the only in-domain labels were also
+        used to fit the public baseline.
+  \item \textbf{In the foundation-model era the binding constraint is often the
+        platform, not the idea.} The highest-value technique (pipeline ensembling)
+        and a genuine $+0.021$ ensemble gain were both real and both undeployable
+        under a 1~MB / 90-minute envelope. A public ceiling built from large shared
+        pretrained components is not a wall of cleverness to out-think; it is a
+        floor, and the door through it is pre-training compute a late, small team
+        does not have.
+\end{enumerate}
+
+Taken together these sharpen the question of where effort actually pays under
+foundation-model baselines and platform limits, and suggest that a useful
+contribution from a mid-pack team is a measured map of the terrain that winners'
+recipes leave unspoken.
+
+%% ===========================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We finished 289/4243 (bronze) at private 0.942, absorbed into the public 0.950
+monoculture and unable to exceed it. The value of this note is not a score but a
+\emph{negative result delivered with measurements}: a falsification of five
+improvement directions, identification of a held-out-validation trap, a reusable
+measurement-gate methodology, and a platform-constraint explanation for why public
+foundation-model pipelines form such hard ceilings. We release all code, the cloud
+training/evaluation harness, and the gates openly, in the hope the map helps the
+next small team decide where to spend its five daily submissions.
+
+%% ===========================================================================
+\section*{Reproducibility \& code}
+\label{sec:repro}
+
+All model training (cloud GPU), the measurement-gate harness
+(\texttt{compare\_to\_teacher}, \texttt{eval\_sed\_ensemble}, the probe and
+rare-taxon gates), soundscape pseudo-labeling, ONNX export, and kernel-build
+scripts are released at: \url{https://github.com/Whyme-Labs/birdclef2026}. The
+public-baseline components are the work of the Kaggle community and are credited to
+their original authors: Perch~v2 (Google)~\cite{perch}; the EoS / Light-ProtoSSM /
+distilled-SED / \texttt{TAX\_SMOOTHING} lineage (nina2025, pilkwang, tuckerarrants,
+hideyukizushi, chaneyma, and others). This note's own contribution is the
+measurement framework and the negative-results map layered on top.
+
+%% ===========================================================================
+\begin{acknowledgments}
+We thank the BirdCLEF+ 2026 organizers and the Kaggle community whose open
+notebooks constitute the baseline studied here.
+\end{acknowledgments}
+
+%% ===========================================================================
+%% Bibliography
+%% ceurart uses a plain/numeric-style by default; use the bundled style if the
+%% template ships one. % TODO verify the recommended .bst for the CLEF 2026 volume.
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
