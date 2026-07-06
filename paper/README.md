@@ -1,5 +1,39 @@
-# BirdCLEF+ 2026 working note — LaTeX source
+# BirdCLEF+ 2026 working note — LaTeX source (camera-ready)
 
-This paper targets the **CEUR-WS single-column working-note template** used for CLEF / LifeCLEF working notes: document class **`ceurart`** (the "CEURART" bundle, published per-volume at `http://ceur-ws.org/Vol-XXX/`). To build, obtain `ceurart.cls` from the CEUR-WS template bundle (Overleaf "CEURART" template or CTAN) and place it alongside `main.tex`, then compile with **`pdflatex` + `bibtex`**: `pdflatex main` → `bibtex main` → `pdflatex main` → `pdflatex main`. **Compiled preview:** `working_note_preview.pdf` (6 pages, all citations resolved) is rendered here with a minimal `preview/ceurart.cls` shim that maps the ceurart macros onto the standard `article` class, so the paper compiles without the official bundle. It is a content preview, **not** the official CEUR layout — for camera-ready, use the genuine `ceurart.cls`.
+CEUR-WS single-column working note for CLEF / LifeCLEF 2026, built with the
+**official CEURART class** (`ceurart.cls` v0.6.2, 2025-10-06, from
+<https://github.com/yamadharma/ceurart>), which is checked in here alongside
+`main.tex`. The class pulls in the Libertinus fonts and the
+`elsarticle-num-names` bibliography style; on Debian/Ubuntu these come from
+`texlive-fonts-extra` + `texlive-publishers` (a full TeX Live also works).
 
-Status: the team author block (`Whyme Labs`, `wmhy.tech@gmail.com`) is filled, and a real `\address` brace bug was fixed so the official file compiles cleanly. Still optional/`% TODO` in `main.tex`: an individual author name/ORCID, the postal address, and the CLEF 2026 `\conference` venue/dates + CEUR volume number. The bibliography (`refs.bib`) is filled with real metadata; three fields carry a `% verify` flag (Bird-MAE arXiv id / TMLR URL, whether to add a separate Perch-v2 report, and which BirdCLEF/LifeCLEF overview edition + CEUR volume to cite).
+**Build** (`pdflatex` + `bibtex`):
+
+```
+pdflatex main
+bibtex   main
+pdflatex main
+pdflatex main
+```
+
+Output: **`main.pdf`** (8 pages, PDF/A metadata via `pdfx`; all 9 references
+resolved). This is the camera-ready PDF.
+
+## Camera-ready revision (addressing the two accept-with-revisions reviews)
+
+- **Official template.** Replaced the earlier `article`-class preview shim with
+  the genuine `ceurart.cls` (Reviewer 2, mandatory).
+- **Mandatory citations added** to `refs.bib` and cited in the introduction: the
+  LifeCLEF 2026 overview (`lifeclef2026`) and the BirdCLEF+ 2026 task overview
+  (`birdclef2026overview`).
+- **Terminology (Reviewer 1).** The coined "measurement-gate" is now grounded in
+  standard practice — a *local cross-validation split* used as a pre-submission
+  gate — throughout (see §4 and §9).
+- **Leak-control setup (Reviewer 2).** New §4.1 spells out how the offline split
+  is constructed to avoid leakage (file-level hold-out of 13 soundscapes excluded
+  from every training stage, including pseudo-label generation) and why the public
+  components remain leak-optimistic on it.
+
+The author block (`Whyme Labs`, `wmhy.tech@gmail.com`, Malaysia) and the CLEF 2026
+`\conference` line (Jena, Germany, Sep 21–24, 2026) are filled. `refs.bib` carries
+real metadata for all entries.

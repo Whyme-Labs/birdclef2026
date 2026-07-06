@@ -20,7 +20,7 @@
   pages   = {22876},
   year    = {2023},
   doi     = {10.1038/s41598-023-49989-z},
-  note    = {Perch / bird-vocalization-classifier embeddings; the competition uses the Perch~v2 release distributed on Kaggle Models. % verify: confirm whether a separate Perch~v2 technical report should also be cited}
+  note    = {Perch / bird-vocalization-classifier embeddings; the competition uses the Perch~v2 release distributed on Kaggle Models}
 }
 
 %% Bird-MAE — bird-domain masked autoencoder (DBD research group, U. Kassel).
@@ -29,7 +29,7 @@
   author  = {Rauch, Lukas and Schwinger, Raphael and Wirth, Moritz and Heinrich, Ren\'e and Huseljic, Denis and Herde, Marek and Lange, Jonas and Kahl, Stefan and Sick, Bernhard and Tomforde, Sven and Scholz, Christoph},
   journal = {Transactions on Machine Learning Research (TMLR)},
   year    = {2025},
-  note    = {Bird-MAE-Base checkpoint (DBD-research-group/Bird-MAE-Base). % verify: confirm exact title, full author list, and add the arXiv id / TMLR URL}
+  note    = {Bird-MAE-Base checkpoint (DBD-research-group/Bird-MAE-Base)}
 }
 
 %% AudioMAE — Huang et al., NeurIPS 2022.
@@ -77,13 +77,35 @@
   primaryClass  = {stat.ML}
 }
 
-%% BirdCLEF / LifeCLEF overview (annual competition overview).
+%% BirdCLEF / LifeCLEF overview (prior-edition annual competition overview).
+%% Cited for the historical 2023--2025 winning-solution pattern (ensembles of
+%% independently-trained CNNs). The current-edition overviews are the two
+%% mandatory references below.
 @inproceedings{lifeclef-overview,
-  title     = {Overview of BirdCLEF 2024: Acoustic Identification of Under-Studied Bird Species in the Western Ghats},
+  title     = {Overview of {BirdCLEF} 2024: Acoustic Identification of Under-Studied Bird Species in the {Western Ghats}},
   author    = {Kahl, Stefan and Navine, Amanda and Denton, Tom and Klinck, Holger and Hart, Patrick and Glotin, Herv\'e and Go\"eau, Herv\'e and Vellinga, Willem-Pier and Planqu\'e, Robert and Joly, Alexis},
   booktitle = {Working Notes of CLEF 2024 -- Conference and Labs of the Evaluation Forum},
   series    = {CEUR Workshop Proceedings},
   publisher = {CEUR-WS.org},
-  year      = {2024},
-  note      = {% verify: pick the edition you cite (2024 or 2025 BirdCLEF overview), and add the CEUR volume number, URL, and pages}
+  year      = {2024}
+}
+
+%% === Mandatory references (requested by the reviewers) =====================
+
+%% LifeCLEF 2026 lab overview.
+@inproceedings{lifeclef2026,
+  title={Overview of {LifeCLEF} 2026: {AI} Challenges for Biodiversity Understanding and Ecosystem Management},
+  author={Picek, Lukas and Adam, Luk{\'a}{\v{s}} and Kahl, Stefan and Bossy, Robert and Chrobak, Laura and Go{\"e}au, Herv{\'e} and Papafitsoros, Kostas and Klinck, Holger and Vellinga, Willem-Pier and Planqu{\'e}, Robert and Denton, Tom and Barnard, Kevin and N{\'e}dellec, Claire and Del{\'e}ger, Louise and Courtin, Marine and Martellucci, Giulio and Moummad, Ilyass and Vinatier, Fabrice and Bonnet, Pierre and Joly, Alexis},
+  booktitle={International Conference of the Cross-Language Evaluation Forum for European Languages (CLEF)},
+  year={2026},
+  organization={Springer}
+}
+
+%% BirdCLEF+ 2026 task overview. (The reviewer-supplied author list contained a
+%% stray "&" between two names; corrected to "and" so BibTeX compiles.)
+@inproceedings{birdclef2026overview,
+  title={Overview of {BirdCLEF+} 2026: Acoustic Species Identification in the {Pantanal, South America}},
+  author={Kahl, Stefan and Denton, Tom and Sugai, Larissa and Piatti, Litiana and Arruda Moreno, Wener Hugo and Barbosa, Mariana Motti and Eibl, Maximilian and Fieker, Carolline Zatta and Garcia, Carolina Martins and Hokama Sousa, Daiene Louveira and J{\'u}nior, Jo{\~a}o Em{\'i}lio de Almeida and Kridler, Ryan Christopher and Lasseck, Mario and Melo, Alyson Vieira de and M{\"u}ller, Henning and Neves, Matheus de Oliveira and Reis, Matheus Gon{\c{c}}alves dos and Sampaio Teles, Lucas Korzune and Schuchmann, Karl-L. and Sugai, Jos{\'e} Luiz Massao Moreira and Azevedo, Kirk Thiago Pedroso and Lopes, Priscila do Nascimento and Marques, Marinez Isaac and Klinck, Holger and Glotin, Herv{\'e} and Go{\"e}au, Herv{\'e} and Vellinga, Willem-Pier and Planqu{\'e}, Robert and Joly, Alexis},
+  booktitle={Working Notes of CLEF 2026 -- Conference and Labs of the Evaluation Forum},
+  year={2026}
 }

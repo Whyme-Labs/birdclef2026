@@ -2,46 +2,32 @@
 %% Mapping the Public Ceiling: Negative Results and a Platform-Constraint
 %% Hypothesis for BirdCLEF+ 2026
 %%
-%% CEUR-WS single-column working-note (CLEF / LifeCLEF) — document class ceurart.
+%% CEUR-WS single-column working note (CLEF / LifeCLEF).
+%% Document class: the OFFICIAL ceurart.cls (CEURART v0.6.2, 2025-10-06,
+%% https://github.com/yamadharma/ceurart). Place ceurart.cls beside this file.
 %%
-%% REQUIRED FILES / PACKAGES
-%%   - ceurart.cls           (obtain from http://ceur-ws.org/Vol-XXX/ ; the
-%%                            "CEURART" LaTeX bundle on Overleaf / CTAN.
-%%                            % TODO the user must place ceurart.cls in this dir
-%%                            or install the CEURART template.)
-%%   - amsmath, amssymb       (math)
-%%   - booktabs               (Table 1, \toprule/\midrule/\bottomrule)
-%%   - graphicx               (figures, if any added later)
-%%   - hyperref               (URLs; usually loaded by ceurart already — guarded)
-%%   - url                    (\url in bibliography)
-%%
-%% COMPILE
+%% COMPILE (Libertinus fonts + elsarticle-num-names.bst are pulled in by the class)
 %%   pdflatex main
 %%   bibtex   main
 %%   pdflatex main
 %%   pdflatex main
-%%
-%% NOTE author identity, affiliation, email, and the CEUR volume number are
-%% placeholders the user MUST fill in before submission (search for "% TODO").
 %% ===========================================================================
 
 \documentclass{ceurart}
 
-%% --- packages -------------------------------------------------------------
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{booktabs}   % for the Table 1 rules
-\usepackage{graphicx}
-% hyperref is normally pulled in by ceurart; load defensively only if absent.
-\makeatletter
-\@ifpackageloaded{hyperref}{}{\usepackage{hyperref}}
-\makeatother
+%% One can fix some overfulls
+\sloppy
 
 %% ===========================================================================
 \begin{document}
 
+%% --- rights management (CEURART default: CC BY 4.0) -----------------------
+\copyrightyear{2026}
+\copyrightclause{Copyright for this paper by its authors.
+  Use permitted under Creative Commons License Attribution 4.0
+  International (CC BY 4.0).}
+
 %% --- conference / venue line ----------------------------------------------
-%% TODO verify the exact \conference macro spelling for the CLEF 2026 volume.
 \conference{CLEF 2026: Conference and Labs of the Evaluation Forum,
             September 21--24, 2026, Jena, Germany}
 
@@ -49,15 +35,10 @@
        Hypothesis for BirdCLEF+ 2026}
 
 %% --- author block ---------------------------------------------------------
-%% Team identity filled. % TODO (optional) add the individual author name(s) and
-%% ORCID(s) if you wish to be credited personally rather than as the team.
-\author[1]{Whyme Labs}[%
-  % orcid=0000-0000-0000-0000, % TODO (optional) add ORCID
+\author[1]{Wei Meng Soh}[%
   email=wmhy.tech@gmail.com,
 ]
-
-% TODO (optional) add a postal address inside the braces below.
-\address[1]{Whyme Labs (independent)}
+\address[1]{Whyme Labs (independent), Malaysia}
 
 %% --- abstract -------------------------------------------------------------
 \begin{abstract}
@@ -72,21 +53,20 @@ taxonomy-smoothing post-processor --- had been openly shared and converged on a
 public-leaderboard score of \textbf{0.950}, where (as of the public-LB snapshot
 on 2~June~2026) roughly \textbf{890 of 4243 teams scored in the
 $[0.950, 0.951)$ band}. We treat this plateau as an object of study rather than a
-target. We built a \emph{measurement-gate} framework that reduces each
-improvement hypothesis to a cheap offline quantity and tests it \emph{before}
-spending one of five daily submission slots, and used it to test every lever
-available to a small team: own-trained SEDs, foundation-model linear probes,
-rare-taxon specialists, post-hoc calibration tricks, and architecturally-diverse
-model ensembles. Each was neutral or negative. Two observations we found
-practically consequential in this setting: (1)~the public components' apparent
-near-perfect held-out accuracy is \emph{optimistic by construction} --- they are
-fit on the only in-domain labelled audio available for validation --- which
-inverts the most natural offline comparison and makes held-out macro-AUC an
-unreliable basis for ranking a challenger against the baseline; and (2)~the
-binding constraint for a small team is not modeling skill but \textbf{platform
-limits} --- a ${\sim}1$~MB notebook-size cap and a 90-minute CPU runtime budget
---- which physically forbid the one technique with genuine headroom (ensembling
-multiple full foundation-model pipelines). On a single held-out split,
+target. We used a disciplined \emph{local cross-validation gate} --- a
+leak-controlled offline split scored before spending one of five daily submission
+slots --- to test every lever available to a small team: own-trained SEDs,
+foundation-model linear probes, rare-taxon specialists, post-hoc calibration
+tricks, and architecturally-diverse model ensembles. Each was neutral or negative.
+Two observations we found practically consequential in this setting: (1)~the public
+components' apparent near-perfect held-out accuracy is \emph{optimistic by
+construction} --- they are fit on the only in-domain labelled audio available for
+validation --- which inverts the most natural offline comparison and makes held-out
+macro-AUC an unreliable basis for ranking a challenger against the baseline; and
+(2)~the binding constraint for a small team is not modeling skill but
+\textbf{platform limits} --- a ${\sim}1$~MB notebook-size cap and a 90-minute CPU
+runtime budget --- which physically forbid the one technique with genuine headroom
+(ensembling multiple full foundation-model pipelines). On a single held-out split,
 architecturally-diverse CNN ensembling improved macro-AUC by \textbf{+0.021} over
 its best member (a leak-controlled, directional result, \S\ref{sec:ensemble}),
 yet that ensemble could not be deployed within the runtime envelope. We close
@@ -95,7 +75,7 @@ are private: in the foundation-model era a public pipeline assembled from large
 pretrained components plus a community-discovered post-processing trick is a
 remarkably hard floor, and we conjecture the residual gap to the leaders is paid
 largely in up-front training compute rather than inference-time cleverness. All
-code and the measurement-gate harness are released openly.
+code and the offline-gate harness are released openly.
 \end{abstract}
 
 %% --- keywords -------------------------------------------------------------
@@ -115,13 +95,15 @@ code and the measurement-gate harness are released openly.
 \section{Introduction}
 \label{sec:intro}
 
-BirdCLEF+ 2026 asked participants to identify which of 234 species --- birds,
-amphibians, mammals, reptiles, and insects --- vocalize in 1-minute soundscapes
-from the Brazilian Pantanal, an important conservation-monitoring task. Submissions
-are CPU-only Kaggle notebooks evaluated on a hidden set of ${\sim}600$ recordings,
-scored by macro-averaged ROC-AUC that skips classes with no true positives in the
-test set; the runtime budget is \textbf{90 minutes}, internet is disabled, and
-each team may submit five times per day.
+BirdCLEF+ 2026, the bird-focused task of the LifeCLEF 2026 evaluation
+campaign~\cite{lifeclef2026,birdclef2026overview}, asked participants to identify
+which of 234 species --- birds, amphibians, mammals, reptiles, and insects ---
+vocalize in 1-minute soundscapes from the Brazilian Pantanal, an important
+conservation-monitoring task. Submissions are CPU-only Kaggle notebooks evaluated
+on a hidden set of ${\sim}600$ recordings, scored by macro-averaged ROC-AUC that
+skips classes with no true positives in the test set; the runtime budget is
+\textbf{90 minutes}, internet is disabled, and each team may submit five times per
+day.
 
 The competition exhibited an unusually sharp \emph{public-kernel monoculture}. A
 lineage of openly-shared notebooks (``Ensemble-of-Solutions'', EoS.x, and their
@@ -199,18 +181,48 @@ out-of-fold gating, iterative smoothing) and even one with a different ProtoSSM
 implementation all returned exactly 0.950 or below.
 
 %% ===========================================================================
-\section{Method: measurement gates before submission slots}
+\section{Method: local cross-validation as a pre-submission gate}
 \label{sec:method}
 
 The scarce resources here are not FLOPs but \textbf{submission slots} (five per
 day, each scored only after a multi-hour hidden-test rerun) and \textbf{trustworthy
 validation signal} (the labelled audio is tiny and, as \S\ref{sec:trap} shows,
 optimistically biased toward the public models). Our central methodological move
-was to never spend a slot on an unmeasured hypothesis. For each idea we built an
-offline \emph{gate} on cloud GPU (Modal) or the local GPU:
+was to never spend a slot on an unmeasured hypothesis: for each idea we built a
+cheap offline test on cloud GPU (Modal) or the local GPU and used it as a
+go/no-go \emph{gate} on the submission budget.
+
+\subsection{The offline split, and how it is kept leak-controlled}
+\label{sec:split}
+
+At bottom this is a \emph{local cross-validation split} of the kind familiar to
+Kaggle competitors --- hold out labelled data, score a candidate on it offline,
+and promote it to a real submission only if it clears a bar. What we add is
+(i)~treating that split as a \emph{hard gate} on a five-per-day budget rather than
+a diagnostic weighed against intuition, and (ii)~making it \emph{leak-aware},
+because in this competition the most natural local split silently favours the
+public baseline (\S\ref{sec:trap}).
+
+Concretely, the split is \textbf{file-level, not window-level}: we held out 13
+whole labelled soundscapes and used \emph{no} 5-second window from any held-out
+recording anywhere in training. For our own models this exclusion is enforced at
+\emph{every} stage, including the soundscape pseudo-labelling that generates
+noisy-student targets --- so neither a student nor the teacher that labels its
+training data ever sees a held-out file. This is what makes the
+ensemble-vs-member comparison of \S\ref{sec:ensemble} clean: both sides of that
+comparison are equally held out from the same 13 files. The one exclusion we
+\emph{cannot} enforce is on the public components: they were trained by others on
+the full labelled set, so when we score them on our hold-out their numbers are
+leak-optimistic by construction. That asymmetry --- our side genuinely held out,
+the baseline's side not --- is the validation trap of \S\ref{sec:trap}, and it is
+why we lean on \emph{relative}, leak-controlled gates (ensemble-vs-best-single;
+per-class win counts against the public SED) rather than absolute comparisons to
+the baseline.
+
+For each idea we instantiated one of three gates:
 
 \begin{itemize}
-  \item \textbf{\texttt{compare\_to\_teacher}} --- train a candidate SED with a
+  \item \textbf{\texttt{compare\_to\_teacher}} --- train a candidate SED with the
         clean \emph{file-level} hold-out of 13 labelled soundscapes; run the public
         distilled SED on the \emph{same} held-out files; report both macro-AUCs and
         the per-class win count.
@@ -226,9 +238,9 @@ offline \emph{gate} on cloud GPU (Modal) or the local GPU:
 Each gate ran in minutes on a single cloud GPU at low cost (we did not log a
 per-gate cost breakdown; total cloud spend across the study was a few US dollars).
 Each falsified direction would otherwise have consumed one-to-many submission slots
-and a day of latency. We regard the leak-aware gate methodology
-(\S\ref{sec:discussion}) as a small transferable contribution for code-competitions
-with daily quotas and slow scoring.
+and a day of latency. We regard this leak-aware gating discipline
+(\S\ref{sec:discussion}) as a small transferable contribution for
+code-competitions with daily quotas and slow scoring.
 
 \subsection{An agentic experimentation workflow}
 \label{sec:agentic}
@@ -314,7 +326,7 @@ We trained EfficientNet-B0 SEDs two ways: focal-recording-only (public LB
 \textbf{0.931}) and a noisy-student~\cite{noisystudent} variant on 10{,}592
 pseudo-labelled soundscapes $\to$ 127{,}896 soft-labelled windows (public LB
 \textbf{0.933}). Both regressed ${\sim}0.017$--$0.019$ below the baseline when
-blended in. The gate indicated the cause: on a single 13-file hold-out the public
+blended in. The gate indicated the cause: on the 13-file hold-out the public
 SED scored \textbf{0.994} versus our student's \textbf{0.910} --- though that 0.994
 is optimistically biased (\S\ref{sec:trap}). A single own-trained CNN on one GPU
 does not reach a model distilled from a strong teacher ensemble --- and, because
@@ -389,9 +401,9 @@ CNNs, and we used it as a \emph{controlled internal} test rather than a comparis
 to the (leak-flattered) baseline. We trained four diverse SED backbones ---
 EfficientNetV2-S, ConvNeXt-Small, EfficientNet-B3, SEResNeXt50. Crucially, the 13
 hold-out files were excluded from \textbf{all} four members' training,
-\emph{including the soundscape pseudo-label generation} --- so the
-ensemble-vs-member comparison is leak-controlled with respect to that split (both
-sides are equally held out, unlike the baseline of \S\ref{sec:trap}). On that
+\emph{including the soundscape pseudo-label generation} (\S\ref{sec:split}) --- so
+the ensemble-vs-member comparison is leak-controlled with respect to that split
+(both sides are equally held out, unlike the baseline of \S\ref{sec:trap}). On that
 single split the four-model rank ensemble scored \textbf{0.9542} versus the best
 single member's \textbf{0.9332}, a \textbf{+0.021} improvement --- the expected
 diversity effect, observed cleanly. We stress this is a \emph{single-split point
@@ -506,14 +518,14 @@ Three takeaways we believe are non-obvious and worth recording:
         bounds} on their own models' relative quality, and prefer leak-free
         relative gates.
   \item \textbf{Leak-aware offline gating.} Validating locally before submitting is
-        standard; the twist that mattered here is \emph{what} to validate against.
-        Because absolute held-out comparison to the baseline is biased (point~1), we
-        gated on \emph{relative} and \emph{orthogonality} signals instead
-        (ensemble-vs-best-single; per-class win counts against the public SED). This
-        let us reach a decision on five directions within the budget a blind
-        approach would spend on one, and we recommend the leak-aware variant
-        specifically for code-competitions where the only in-domain labels were also
-        used to fit the public baseline.
+        standard practice --- a local cross-validation split; the twist that
+        mattered here is \emph{what} to validate against. Because absolute held-out
+        comparison to the baseline is biased (point~1), we gated on \emph{relative}
+        and \emph{orthogonality} signals instead (ensemble-vs-best-single; per-class
+        win counts against the public SED). This let us reach a decision on five
+        directions within the budget a blind approach would spend on one, and we
+        recommend the leak-aware variant specifically for code-competitions where
+        the only in-domain labels were also used to fit the public baseline.
   \item \textbf{In the foundation-model era the binding constraint is often the
         platform, not the idea.} The highest-value technique (pipeline ensembling)
         and a genuine $+0.021$ ensemble gain were both real and both undeployable
@@ -536,16 +548,16 @@ We finished 289/4243 (bronze) at private 0.942, absorbed into the public 0.950
 monoculture and unable to exceed it. The value of this note is not a score but a
 \emph{negative result delivered with measurements}: a falsification of five
 improvement directions, identification of a held-out-validation trap, a reusable
-measurement-gate methodology, and a platform-constraint explanation for why public
-foundation-model pipelines form such hard ceilings. We release all code, the cloud
-training/evaluation harness, and the gates openly, in the hope the map helps the
-next small team decide where to spend its five daily submissions.
+leak-aware local-CV gating methodology, and a platform-constraint explanation for
+why public foundation-model pipelines form such hard ceilings. We release all code,
+the cloud training/evaluation harness, and the gates openly, in the hope the map
+helps the next small team decide where to spend its five daily submissions.
 
 %% ===========================================================================
 \section*{Reproducibility \& code}
 \label{sec:repro}
 
-All model training (cloud GPU), the measurement-gate harness
+All model training (cloud GPU), the offline-gate harness
 (\texttt{compare\_to\_teacher}, \texttt{eval\_sed\_ensemble}, the probe and
 rare-taxon gates), soundscape pseudo-labeling, ONNX export, and kernel-build
 scripts are released at: \url{https://github.com/Whyme-Labs/birdclef2026}. The
@@ -562,21 +574,19 @@ notebooks constitute the baseline studied here.
 \end{acknowledgments}
 
 %% ===========================================================================
+%% CEUR-WS Generative-AI disclosure. Policy: https://ceur-ws.org/GenAI/Policy.html
 \section*{Declaration on Generative AI}
-AI-assisted tools (in particular Anthropic's Claude, via the Claude~Code agent;
-see \S\ref{sec:agentic}) were used during the development of this work to aid in
-programming, debugging, running and parsing experiments, grammar and spelling
-checks, literature review, and experimentation. All experiments were designed and
-configured under the authors' direction, all results were manually verified, and
-all scientific interpretations and conclusions reflect the authors' own judgment.
-The authors take full responsibility for the accuracy, integrity, and originality
-of the work presented in this paper.
+During the preparation of this work, the author(s) used Anthropic's Claude (via the
+Claude~Code agent; see \S\ref{sec:agentic}) in order to: assist with programming
+and debugging, run and parse experiments, review literature, and check grammar and
+spelling. All experiments were designed and configured under the authors'
+direction, all results were manually verified, and all scientific interpretations
+and conclusions reflect the authors' own judgment. After using these tools, the
+author(s) reviewed and edited the content as needed and take full responsibility
+for the publication's content.
 
 %% ===========================================================================
-%% Bibliography
-%% ceurart uses a plain/numeric-style by default; use the bundled style if the
-%% template ships one. % TODO verify the recommended .bst for the CLEF 2026 volume.
-\bibliographystyle{plain}
+%% Bibliography — ceurart loads natbib + elsarticle-num-names.bst by default.
 \bibliography{refs}
 
 \end{document}

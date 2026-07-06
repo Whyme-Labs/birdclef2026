@@ -1,0 +1,12 @@
+# LaTeX build byproducts (keep main.tex, refs.bib, ceurart.cls, main.pdf)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.abs
+*.xmpi
+*.xmpdata
+*.fls
+*.fdb_latexmk
+*.synctex.gz

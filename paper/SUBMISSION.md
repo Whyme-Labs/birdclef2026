@@ -2,14 +2,14 @@
 
 Everything CLEF 2026 / EasyChair will ask for, ready to copy. Do this in **your own browser** (you need to log in + the PDF on your disk).
 
+> **Camera-ready status (post-review).** The paper was **accepted** (both reviews: accept). The camera-ready in `paper/main.pdf` is built with the **official `ceurart.cls`** (checked in) and addresses all reviewer requests: official CEUR-WS template, the two mandatory citations, the "measurement-gate → local cross-validation" terminology, and an explicit leak-control description (see `paper/README.md`). Upload `paper/main.pdf` as the camera-ready, plus the signed CEUR copyright form.
+
 ## Steps
 
-1. **Build the final PDF** (official styling):
-   - Open the CEUR template: https://www.overleaf.com/latex/templates/template-for-submissions-to-ceur-workshop-proceedings-ceur-ws-dot-org/pkfscdkgkhcq → "Open as Template."
-   - Replace its `main.tex` with ours (`paper/main.tex`) and add `paper/refs.bib`. Compile. (Or just submit `paper/working_note_preview.pdf` if you're short on time — same content, slightly different styling.)
+1. **The final PDF is already built** with the official template: **`paper/main.pdf`**. To rebuild: `pdflatex main → bibtex main → pdflatex main → pdflatex main` (see `paper/README.md`). No Overleaf round-trip is needed — `ceurart.cls` is in the repo.
 2. **Go to** https://www.easychair.org/my/conference?conf=clef2026 → log in / sign up.
 3. **New submission** → choose the **LifeCLEF Lab** → tick **Task 2 – BirdCLEF+**.
-4. Paste the fields below, upload the PDF, Submit. **Deadline: June 17, 2026.**
+4. Paste the fields below, upload the PDF, Submit.
 
 ## Fields to paste
 
@@ -20,7 +20,7 @@ Mapping the Public Ceiling: Negative Results and a Platform-Constraint Hypothesi
 
 **Author** (add yourself as an individual if you want personal credit; otherwise team)
 ```
-Name: Whyme Labs
+Name: Wei Meng Soh
 Email: wmhy.tech@gmail.com
 Affiliation: Whyme Labs (independent)
 Country: Malaysia
@@ -42,7 +42,7 @@ knowledge distillation
 data leakage
 ```
 
-**PDF:** `paper/working_note_preview.pdf` (or the Overleaf-built version).
+**PDF:** `paper/main.pdf` (official CEURART build).
 
 ## Notes
 - Final standing: 289 / 4243, bronze. Public 0.950 / Private 0.942.
