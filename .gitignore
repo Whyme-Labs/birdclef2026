@@ -56,3 +56,6 @@ local_perch/
 kaggle_notebook/
 .gstack/
 .playwright-mcp/
+
+# Keep the exported env spec (overrides *.txt above)
+!env/requirements.txt
