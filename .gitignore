@@ -54,3 +54,5 @@ references/
 local_perch/
 *.whl
 kaggle_notebook/
+.gstack/
+.playwright-mcp/

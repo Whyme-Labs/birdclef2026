@@ -1,0 +1,14 @@
+name: birdclef
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - onnxruntime
+  - onnx
+  - tensorflow
+  - tensorflow-hub
+  - pyarrow
+  - tf2onnx
+  - kagglehub
+  - lightgbm
+prefix: /home/soh/miniconda3/envs/birdclef
